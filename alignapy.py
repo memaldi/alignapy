@@ -1,10 +1,29 @@
 from rdflib import Graph
 from stringdistances import substring_distance
 
-class AlignmentProcess():
+class AlignmentCell():
+        prop1 = None
+        prop2 = None
+        relation = None
+        measure = 0.0
+        
+        def __init__(self, prop1, prop2, relation, measure):
+            self.prop1 = prop1
+            self.prop2 = prop2
+            self.relation = relation
+            self.measure = measure
+
+class Alignment():
+    cell_list = []
+    
+    def add_cell(self, cell):
+        self.cell_list.append(cell)
+
+class NameAndPropertyAlignment():
     
     onto1 = None
     onto2 = None
+    alignment = Alignment()
 
     def _bind_prefixes(self, ontology):
         ontology.bind('owl', 'http://www.w3.org/2002/07/owl#')
@@ -37,6 +56,33 @@ class AlignmentProcess():
         else:
             splitted_uri = prop.s.split('/')
             return splitted_uri[len(splitted_uri) - 1]
+
+    def _get_class_properties(self, class_name, ontology):
+        properties = []
+        sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {<%s> ?s ?o}' % class_name)
+        for p in sparql_result:
+            properties.append(p)
+        return properties
+        
+    def _align_local(self, properties1, properties2):
+        max_value = 0.0
+        moy = 0.0
+        prop_matrix = [[0 for x in xrange(len(properties2))] for x in xrange(len(properties1))]
+        
+        for i in xrange(len(properties1)):
+            entity_name1 = self._get_entity_name(properties1[i]).lower()
+            for j in xrange(len(properties2)):
+                entity_name2 = self._get_entity_name(properties2[j]).lower()
+                prop_matrix[i][j] =  1.0 - substring_distance(entity_name1, entity_name2)
+                print entity_name1, entity_name2, 1.0 - substring_distance(entity_name1, entity_name2)
+        
+        for i in xrange(len(properties1)):
+            for j in xrange(len(properties2)):
+                if prop_matrix[i][j] > max_value:
+                    max_value = prop_matrix[i][j]
+            moy = moy + max_value
+            max_value = 0.0
+        return moy
 
     def init(self, uri1, uri2):
         self.onto1 = Graph()
@@ -112,4 +158,31 @@ class AlignmentProcess():
                             best = j
                             max_value = prop_matrix[i][j]
                     if found and max_value < 0.5:
-                        print prop_list1[i], prop_list2[best], 1.0 - max_value
+                        cell = AlignmentCell(prop_list1[i], prop_list2[best], '=', 1.0 - max_value)
+                        self.alignment.add_cell(cell)
+                factor = 0.0
+                
+            '''for i in xrange(len(class_list1)):
+                properties1 = self._get_class_properties(class_list1[i], self.onto1)
+                nba1 = len(properties1)
+                if nba1 > 0:
+                    for j in xrange(len(class_list2)):
+                        properties2 = self._get_class_properties(class_list2[j], self.onto2)
+                        moy_align_loc = self._align_local(properties1, properties2)
+                        if moy_align_loc > 0.7:
+                            class_matrix[i][j] = (class_matrix[i][j] + 2 * moy_align_loc) / 3
+            '''                
+
+            for i in xrange(len(class_list1)):
+                found = False
+                best = 0
+                max_value = threshold
+                for j in xrange(len(class_list2)):
+                    if class_matrix[i][j] < max_value:
+                        found = True
+                        best = j
+                        max_value = class_matrix[i][j]
+                if found and max_value < 0.5:
+                    cell = AlignmentCell(class_list1[i], class_list2[best], '=', 1.0 - max_value)
+                    self.alignment.add_cell(cell)
+                
