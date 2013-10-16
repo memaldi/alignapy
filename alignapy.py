@@ -1,5 +1,4 @@
 from rdflib import Graph
-from sets import Set
 from stringdistances import substring_distance
 
 class AlignmentProcess():
@@ -11,21 +10,24 @@ class AlignmentProcess():
         ontology.bind('owl', 'http://www.w3.org/2002/07/owl#')
 
     def _get_properties(self, ontology):
-        prop_list = Set()
+        prop_list = []
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a owl:ObjectProperty}')
         for s in sparql_result:
-            prop_list.add(s)
+            if s not in prop_list:
+                prop_list.append(s)
         
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a owl:DatatypeProperty}')
         for s in sparql_result:
-            prop_list.add(s)
+            if s not in prop_list:
+                prop_list.append(s)
         return prop_list
         
     def _get_classes(self, ontology):
-        class_list = Set()
+        class_list = []
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {?s a owl:Class}')
         for s in sparql_result:
-            class_list.add(s)
+            if s not in class_list:
+                class_list.append(s)
         return class_list
         
     def _get_entity_name(self, prop):
@@ -49,6 +51,9 @@ class AlignmentProcess():
     def align(self):
         #Parameters
         pia = 1.0 # relation weight for name
+        pic = 0.5 # class weigth for name
+        epsillon = 0.05 # stoping condition 
+        threshold = 1.0 # threshold above which distances are too high
  
         if self.onto1 != None and self.onto2 != None:            
             # Create property lists and matrix
@@ -61,8 +66,7 @@ class AlignmentProcess():
             class_list2 = self._get_classes(self.onto2)
             class_matrix = [[0 for x in xrange(len(class_list2))] for x in xrange(len(class_list1))]
 
-            i = 0;
-
+            i = 0
             for prop1 in prop_list1:
                 j = 0;
                 entity_name1 = self._get_entity_name(prop1)
@@ -74,10 +78,38 @@ class AlignmentProcess():
                     if entity_name2 != None:
                         entity_name2 = entity_name2.lower()
                     
-                    if entity_name1 != None or entity_name2 != None:                  
-                        prop_matrix[i][j] = pia + substring_distance()
+                    if entity_name1 != None or entity_name2 != None:                
+                        prop_matrix[i][j] = pia * substring_distance(entity_name1, entity_name2)
                     else:
                         prop_matrix[i][j] = 1.0
-                    
                     j += 1
                 i += 1
+                
+            i = 0            
+            for class1 in class_list1:
+                j = 0
+                entity_name1 = self._get_entity_name(class1)
+                if entity_name1 != None:
+                    entity_name1 = entity_name1.lower()
+                    
+                for class2 in class_list2:
+                    entity_name2 = self._get_entity_name(class2)
+                    if entity_name2 != None:
+                        entity_name2 = entity_name2.lower()
+                    class_matrix[i][j] = pic * substring_distance(entity_name1, entity_name2)
+                    j += 1
+                i += 1
+                
+            factor = 1.0
+            while factor > epsillon:
+                for i in xrange(len(prop_list1)):
+                    found = False
+                    best = 0
+                    max_value = threshold
+                    for j in xrange(len(prop_list2)):
+                        if prop_matrix[i][j] < max_value:
+                            found = True
+                            best = j
+                            max_value = prop_matrix[i][j]
+                    if found and max_value < 0.5:
+                        print prop_list1[i], prop_list2[best], 1.0 - max_value
