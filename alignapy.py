@@ -26,6 +26,14 @@ class AlignmentProcess():
         for s in sparql_result:
             class_list.add(s)
         return class_list
+        
+    def _get_entity_name(self, prop):
+        if '#' in prop.s:
+            root = prop.s.defrag()
+            return prop.s.split(root)[1][1:]
+        else:
+            splitted_uri = prop.s.split('/')
+            return splitted_uri[len(splitted_uri) - 1]
 
     def init(self, uri1, uri2):
         self.onto1 = Graph()
@@ -49,3 +57,6 @@ class AlignmentProcess():
             class_list2 = self._get_classes(self.onto2)
             class_matrix = [[0 for x in xrange(len(class_list1) + 1)] for x in xrange(len(class_list2) + 1)]
 
+            for prop in prop_list1:
+                entity_name = self._get_entity_name(prop)
+                print entity_name
