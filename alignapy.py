@@ -16,16 +16,21 @@ class AlignmentCell():
             self.measure = measure
 
 class Alignment():
+    onto1 = None
+    onto2 = None
     cell_list = []
+    
+    def init(self, uri1, uri2):
+        self.onto1 = Graph()
+        self.onto1.parse(uri1, format='xml')
+        self._bind_prefixes(self.onto1)
+        
+        self.onto2 = Graph()
+        self.onto2.parse(uri2, format='xml')
+        self._bind_prefixes(self.onto2)
     
     def add_cell(self, cell):
         self.cell_list.append(cell)
-
-class NameAndPropertyAlignment():
-    
-    onto1 = None
-    onto2 = None
-    alignment = Alignment()
 
     def _bind_prefixes(self, ontology):
         ontology.bind('owl', 'http://www.w3.org/2002/07/owl#')
@@ -113,15 +118,12 @@ class NameAndPropertyAlignment():
         for n in ontology.namespaces():
             if n[0] == namespace:
                 return n[1]
+                
+class NameAndPropertyAlignment(Alignment):    
     
     def init(self, uri1, uri2):
-        self.onto1 = Graph()
-        self.onto1.parse(uri1, format='xml')
-        self._bind_prefixes(self.onto1)
-        
-        self.onto2 = Graph()
-        self.onto2.parse(uri2, format='xml')
-        self._bind_prefixes(self.onto2)
+        #super(NameAndPropertyAlignment, self).init(uri1, uri2)
+        Alignment.init(self, uri1, uri2)
         
     def align(self):
         #Parameters
@@ -188,7 +190,7 @@ class NameAndPropertyAlignment():
                             max_value = prop_matrix[i][j]
                     if found and max_value < 0.5:
                         cell = AlignmentCell(prop_list1[i], prop_list2[best], '=', 1.0 - max_value)
-                        self.alignment.add_cell(cell)
+                        self.add_cell(cell)
                 factor = 0.0
                 
             for i in xrange(len(class_list1)):
@@ -213,5 +215,5 @@ class NameAndPropertyAlignment():
                         max_value = class_matrix[i][j]
                 if found and max_value < 0.5:
                     cell = AlignmentCell(class_list1[i], class_list2[best], '=', 1.0 - max_value)
-                    self.alignment.add_cell(cell)
+                    self.add_cell(cell)
                 
