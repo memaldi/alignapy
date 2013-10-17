@@ -1,5 +1,7 @@
 from rdflib import Graph
+from rdflib.term import URIRef
 from stringdistances import substring_distance
+import operator
 
 class AlignmentCell():
         prop1 = None
@@ -30,22 +32,24 @@ class NameAndPropertyAlignment():
 
     def _get_properties(self, ontology):
         prop_list = []
+        base = self._get_base_uri(ontology)
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a owl:ObjectProperty}')
         for s in sparql_result:
-            if s not in prop_list:
+            if s not in prop_list and s[0].startswith(base):
                 prop_list.append(s)
         
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a owl:DatatypeProperty}')
         for s in sparql_result:
-            if s not in prop_list:
+            if s not in prop_list and s[0].startswith(base):
                 prop_list.append(s)
         return prop_list
         
     def _get_classes(self, ontology):
         class_list = []
+        base = self._get_base_uri(ontology)
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {?s a owl:Class}')
         for s in sparql_result:
-            if s not in class_list:
+            if s not in class_list and s[0].startswith(base):
                 class_list.append(s)
         return class_list
         
@@ -59,9 +63,11 @@ class NameAndPropertyAlignment():
 
     def _get_class_properties(self, class_name, ontology):
         properties = []
+        base = self._get_base_uri(ontology)
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {<%s> ?s ?o}' % class_name)
         for p in sparql_result:
-            properties.append(p)
+            if p[0].startswith(base):
+                properties.append(p)
         return properties
         
     def _align_local(self, properties1, properties2):
@@ -74,7 +80,7 @@ class NameAndPropertyAlignment():
             for j in xrange(len(properties2)):
                 entity_name2 = self._get_entity_name(properties2[j]).lower()
                 prop_matrix[i][j] =  1.0 - substring_distance(entity_name1, entity_name2)
-                print entity_name1, entity_name2, 1.0 - substring_distance(entity_name1, entity_name2)
+                #print entity_name1, entity_name2, 1.0 - substring_distance(entity_name1, entity_name2)
         
         for i in xrange(len(properties1)):
             for j in xrange(len(properties2)):
@@ -84,9 +90,32 @@ class NameAndPropertyAlignment():
             max_value = 0.0
         return moy
 
+    def _get_base_uri(self, ontology):
+        subjects = set(s for s in ontology.subjects() if isinstance(s, URIRef))
+        namespace_dict = {}
+        for s in subjects:
+            try:
+                qname = ontology.qname(s)
+                splitted_qname = qname.split(':')
+                if len(splitted_qname) == 2:
+                    namespace = splitted_qname[0]
+                else:
+                    namespace = ''
+                if namespace in namespace_dict:
+                    namespace_dict[namespace] += 1
+                else:
+                    namespace_dict[namespace] = 1
+            except Exception as e:
+                print e
+        
+        
+        namespace = max(namespace_dict.iteritems(), key=operator.itemgetter(1))[0]
+        for n in ontology.namespaces():
+            if n[0] == namespace:
+                return n[1]
+    
     def init(self, uri1, uri2):
         self.onto1 = Graph()
-        
         self.onto1.parse(uri1, format='xml')
         self._bind_prefixes(self.onto1)
         
@@ -162,7 +191,7 @@ class NameAndPropertyAlignment():
                         self.alignment.add_cell(cell)
                 factor = 0.0
                 
-            '''for i in xrange(len(class_list1)):
+            for i in xrange(len(class_list1)):
                 properties1 = self._get_class_properties(class_list1[i], self.onto1)
                 nba1 = len(properties1)
                 if nba1 > 0:
@@ -171,7 +200,7 @@ class NameAndPropertyAlignment():
                         moy_align_loc = self._align_local(properties1, properties2)
                         if moy_align_loc > 0.7:
                             class_matrix[i][j] = (class_matrix[i][j] + 2 * moy_align_loc) / 3
-            '''                
+                           
 
             for i in xrange(len(class_list1)):
                 found = False
