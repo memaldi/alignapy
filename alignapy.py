@@ -107,8 +107,8 @@ class NameAndPropertyAlignment():
                     namespace_dict[namespace] = 1
             except Exception as e:
                 print e
-        
-        
+                
+        #Thanks to @jonlazaro
         namespace = max(namespace_dict.iteritems(), key=operator.itemgetter(1))[0]
         for n in ontology.namespaces():
             if n[0] == namespace:
