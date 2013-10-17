@@ -119,6 +119,15 @@ class Alignment():
             if n[0] == namespace:
                 return n[1]
                 
+    def _get_individuals(self, ontology):
+        individuals = []
+        sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {?s a owl:NamedIndividual .}')
+        base = self._get_base_uri(ontology)
+        for s in sparql_result:
+            if s[0].startswith(base):
+                individuals.append(s)
+        return individuals
+                
 class NameAndPropertyAlignment(Alignment):    
     
     def init(self, uri1, uri2):
@@ -216,4 +225,68 @@ class NameAndPropertyAlignment(Alignment):
                 if found and max_value < 0.5:
                     cell = AlignmentCell(class_list1[i], class_list2[best], '=', 1.0 - max_value)
                     self.add_cell(cell)
+                    
+class StringDistAlignment(Alignment):
+    
+    def init(self, uri1, uri2):
+        #super(NameAndPropertyAlignment, self).init(uri1, uri2)
+        Alignment.init(self, uri1, uri2)
+        
+    def align(self):
+        # Class matrix
+        class_list1 = self._get_classes(self.onto1)
+        class_dict1 = {}
+        count = 0
+        for c in class_list1:
+            class_dict1[c] = count
+            count += 1
+        
+        class_list2 = self._get_classes(self.onto2)
+        class_dict2 = {}
+        count = 0
+        for c in class_list2:
+            class_dict2[c] = count
+            count += 1
+            
+        class_matrix = [[0 for x in xrange(len(class_list2))] for x in xrange(len(class_list1))]
+        
+        # Prop matrix
+        prop_list1 = self._get_properties(self.onto1)
+        prop_dict1 = {}
+        count = 0
+        for p in prop_list1:
+            prop_dict1[p] = count
+            count += 1
+        
+        prop_list2 = self._get_properties(self.onto2)
+        prop_dict2 = {}
+        count = 0
+        for p in prop_list2:
+            prop_dict2[p] = count
+            count += 1
+       
+        ind_list1 = self._get_individuals(self.onto1)
+        ind_dict1 = {}
+        count = 0
+        for i in ind_list1:
+            try:
+                entity_name = self._get_entity_name(i)
+                if entity_name != None:
+                    ind_dict1[i] = count
+                    count += 1
+            except:
+                pass
                 
+        ind_list2 = self._get_individuals(self.onto2)
+        ind_dict2 = {}
+        count = 0
+        for i in ind_list2:
+            try:
+                entity_name = self._get_entity_name(i)
+                if entity_name != None:
+                    ind_dict2[i] = count
+                    count += 1
+            except:
+                pass
+            
+        
