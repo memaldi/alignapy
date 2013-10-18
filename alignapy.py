@@ -373,3 +373,21 @@ class StringDistAlignment(Alignment):
             if found:
                 cell = AlignmentCell(ind1, ind2, '=', max_value)
                 self.add_cell(cell)
+              
+                
+class NameEqAlignment(StringDistAlignment):
+
+    def init(self, uri1, uri2):
+        StringDistAlignment.init(self, uri1, uri2)
+    
+    def align(self):
+        StringDistAlignment.align(self,  method='equal_distance')
+        
+        
+class EditDistNameAlignment(StringDistAlignment):
+
+    def init(self, uri1, uri2):
+        StringDistAlignment.init(self, uri1, uri2)
+    
+    def align(self):
+        StringDistAlignment.align(self,  method='levenshtein_distance')

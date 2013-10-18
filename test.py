@@ -1,6 +1,6 @@
-from alignapy import NameAndPropertyAlignment, StringDistAlignment
+from alignapy import NameAndPropertyAlignment, StringDistAlignment, NameEqAlignment
 
-ap = StringDistAlignment()
+ap = NameEqAlignment()
 ap.init('ontologies/aktors.owl', 'ontologies/bibo.owl')
 
 ap.align()
