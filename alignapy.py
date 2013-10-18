@@ -235,9 +235,9 @@ class StringDistAlignment(Alignment):
         Alignment.init(self, uri1, uri2)
         
         
-    def _measure(self, class1, class2):
-        entity_name1 = self._get_entity_name(class1)
-        entity_name2 = self._get_entity_name(class2)
+    def _measure(self, object1, object2):
+        entity_name1 = self._get_entity_name(object1)
+        entity_name2 = self._get_entity_name(object2)
         if entity_name1 == None or entity_name2 == None:
             return 1.0
         #params = (entity_name1.lower(), entity_name2.lower())
@@ -313,7 +313,63 @@ class StringDistAlignment(Alignment):
             for class2 in class_list2:
                 class_matrix[class_dict1[class1]][class_dict2[class2]] = self._measure(class1, class2)
         
-        #Compute distances on individuals
+        # Compute distances on individuals
         for ind1 in ind_list1:
             for ind2 in ind_list2:
-                ind_matrix[ind_dict1[ind1]][ind_dict2[ind2]] = None
+                ind_matrix[ind_dict1[ind1]][ind_dict2[ind2]] = self._measure(ind1, ind2)
+                
+        # Compute distances on properties
+        for prop1 in prop_list1:
+            for prop2 in prop_list2:
+                prop_matrix[prop_dict1[prop1]][prop_dict2[prop2]] = self._measure(prop1, prop2)
+                
+        # Extract
+        threshold = 0.0
+        max_value = 0.0
+        found = False
+        val = 0.0
+        
+        # Extract for properties
+        for prop1 in prop_list1:
+            found = False
+            max_value = threshold
+            prop2 = None
+            for current in prop_list2:
+                val = 1.0 - prop_matrix[prop_dict1[prop1]][prop_dict2[current]]
+                if val > max_value:
+                    found = True
+                    max_value = val
+                    prop2 = current
+            if found:
+                cell = AlignmentCell(prop1, prop2, '=', max_value)
+                self.add_cell(cell)
+        
+        # Extract for classes
+        for class1 in class_list1:
+            found = False
+            max_value = threshold
+            class2 = None
+            for current in class_list2:
+                val = 1.0 - class_matrix[class_dict1[class1]][class_dict2[current]]
+                if val > max_value:
+                    found = True
+                    max_value = val
+                    class2 = current
+            if found:
+                cell = AlignmentCell(class1, class2, '=', max_value)
+                self.add_cell(cell)
+                
+        # Extract for individuals
+        for ind1 in ind_list1:
+            found = False
+            max_value = threshold
+            ind2 = None
+            for current in ind_list2:
+                val = 1.0 - ind_matrix[ind_dict1[ind1]][ind_dict2[current]]
+                if val > max_value:
+                    found = True
+                    max_value = val
+                    ind2 = current
+            if found:
+                cell = AlignmentCell(ind1, ind2, '=', max_value)
+                self.add_cell(cell)
