@@ -242,9 +242,8 @@ class StringDistAlignment(Alignment):
             return 1.0
         #params = (entity_name1.lower(), entity_name2.lower())
         #invoke method
-        call = getattr(stringdistances, self.method)
-        
-        return call(entity_name1.lower(), entity_name2.lower)
+        call = getattr(stringdistances, self.method)(entity_name1.lower(), entity_name2.lower())
+        return call
         
     def align(self, method='equal_distance'):
         self.method = method
@@ -309,8 +308,12 @@ class StringDistAlignment(Alignment):
             
         ind_matrix = [[0 for x in xrange(len(ind_list2))] for x in xrange(len(ind_list1))]
         
-        # Compute
-        
+        # Compute distances on classes
         for class1 in class_list1:
             for class2 in class_list2:
                 class_matrix[class_dict1[class1]][class_dict2[class2]] = self._measure(class1, class2)
+        
+        #Compute distances on individuals
+        for ind1 in ind_list1:
+            for ind2 in ind_list2:
+                ind_matrix[ind_dict1[ind1]][ind_dict2[ind2]] = None
