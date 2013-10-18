@@ -78,15 +78,112 @@ def _normalize(string):
     string = string.replace(' ', '')
     return string
     
+def _winkler_improvement(string1, string2, commonality):
+    n = min(len(string), len(string2))
+    for i in xrange(n):
+        if string1[i] != string2[i]:
+            break
+    common_prefix_length = min(4, i)
+    winkler = common_prefix_length * 0.1 * (1 - commonality)
+    return winkler
+    
 def _score(string1, string2):
     if string1 == None or string2 == None:
         return -1
     
-    string1 = string1.lower()
-    string2 = string2.lower()
-    string1 = _normalize(string1)
-    string2 = _normalize(string2)
+    s1 = string1.lower()
+    s2 = string2.lower()
+    s1 = _normalize(s1)
+    s2 = _normalize(s2)
     
+    l1 = len(s1)
+    l2 = len(s2)
+    
+    L1 = l1
+    L2 = l2
+    
+    if l1 == 0 and l2 == 0:
+        return 1.0
+    if l1 == 0 or l2 == 0:
+        return 0.0
+    
+    common = 0.0
+    best = 2
+    max_value = min(l1, l2)
+    
+    while len(s1) > 0 and len(s2) > 0 and best != 0:
+        best = 0
+        
+        l1 = len(s1)
+        l2 = len(s2)
+        
+        i = 0
+        while i < l1 and l1 - i > best:
+            j = 0
+            while l2 - j > best:
+                k = i
+                while j < l2 and s1[k] != s2[j]:
+                    j += 1
+                
+                if j != l2:
+                    p = j
+                    j += 1
+                    k += 1
+                    while j < l2 and k < l1 and s1[k] == s2[j]:
+                        j += 1
+                        k += 1
+                    if k - i > best:
+                        start_s1 = i
+                        end_s1 = k;
+                        start_s2 = p;
+                        end_s2 = j;
+        
+        new_string = ''
+    
+        for i in xrange(len(s1)):
+            if i >= start_s1 and i < end_s1:
+                continue
+            new_string += s1[i]
+            
+        s1 = new_string
+        new_string = ''
+        
+        for i in xrange(len(s2)):
+            if i >= start_s2 and i < end_s2:
+                continue
+            new_string += s2[i]        
+        
+        s2 = new_string
+        
+        if best > 2:
+            common += best
+        else:
+            best = 0
+    
+    commonality = (2 * common) / (l1 + l2)
+    
+    wi = winkler_improvement(string1, string2, commonality)
+    rest1 = L1 - common
+    rest2 = L2 - common
+    
+    #unmatched_s1 = max(rest1, 0)
+    #unmatched_s2 = max(rest2, 0)
+    unmatched_s1 = rest1/L1
+    unmatched_s2 = rest2/L2
+    
+    suma = unmatched_s1 + unmatched_s2
+    product = unmatched_s1 * unmatched_s2
+    
+    p = 0.6
+    
+    if suma - product == 0:
+        dissimilarity = 0
+    else:
+        dissimilarity = float(product) / float(p + (1 - p) * (suma - product))
+        
+    result = commonality - dissimilarity + wi
+    return (result + 1) / 2
+              
 def smoa_distance(string1, string2):
     if string1 == None or string2 == None:
         return 1.0
