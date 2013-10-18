@@ -26,3 +26,12 @@ def substring_distance(string1, string2):
                 best = max(best, k-i)
         i += 1
     return 1.0 - (float(2 * best) / float(len1 + len2))
+    
+
+def equal_distance(string1, string2):
+    if string1 == None or string2 == None:
+        return 1.0
+    if string1 == string2:
+        return 0.0
+    else:
+        return 1.0
