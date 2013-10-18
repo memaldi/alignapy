@@ -71,3 +71,23 @@ def needlemanwunsch_distance(string1, string2, gap):
     
 def levenshtein_distance(string1, string2):
     return needlemanwunsch_distance(string1, string2, 1)
+    
+def _normalize(string):
+    string = string.replace('.', '')
+    string = string.replace('_', '')
+    string = string.replace(' ', '')
+    return string
+    
+def _score(string1, string2):
+    if string1 == None or string2 == None:
+        return -1
+    
+    string1 = string1.lower()
+    string2 = string2.lower()
+    string1 = _normalize(string1)
+    string2 = _normalize(string2)
+    
+def smoa_distance(string1, string2):
+    if string1 == None or string2 == None:
+        return 1.0
+    
