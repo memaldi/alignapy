@@ -1,6 +1,6 @@
 from rdflib import Graph
 from rdflib.term import URIRef
-from stringdistances import substring_distance
+import stringdistances
 import operator
 
 class AlignmentCell():
@@ -84,8 +84,8 @@ class Alignment():
             entity_name1 = self._get_entity_name(properties1[i]).lower()
             for j in xrange(len(properties2)):
                 entity_name2 = self._get_entity_name(properties2[j]).lower()
-                prop_matrix[i][j] =  1.0 - substring_distance(entity_name1, entity_name2)
-                #print entity_name1, entity_name2, 1.0 - substring_distance(entity_name1, entity_name2)
+                prop_matrix[i][j] =  1.0 - stringdistances.substring_distance(entity_name1, entity_name2)
+                #print entity_name1, entity_name2, 1.0 - stringdistances.substring_distance(entity_name1, entity_name2)
         
         for i in xrange(len(properties1)):
             for j in xrange(len(properties2)):
@@ -165,7 +165,7 @@ class NameAndPropertyAlignment(Alignment):
                         entity_name2 = entity_name2.lower()
                     
                     if entity_name1 != None or entity_name2 != None:                
-                        prop_matrix[i][j] = pia * substring_distance(entity_name1, entity_name2)
+                        prop_matrix[i][j] = pia * stringdistances.substring_distance(entity_name1, entity_name2)
                     else:
                         prop_matrix[i][j] = 1.0
                     j += 1
@@ -182,7 +182,7 @@ class NameAndPropertyAlignment(Alignment):
                     entity_name2 = self._get_entity_name(class2)
                     if entity_name2 != None:
                         entity_name2 = entity_name2.lower()
-                    class_matrix[i][j] = pic * substring_distance(entity_name1, entity_name2)
+                    class_matrix[i][j] = pic * stringdistances.substring_distance(entity_name1, entity_name2)
                     j += 1
                 i += 1
                 
@@ -228,11 +228,26 @@ class NameAndPropertyAlignment(Alignment):
                     
 class StringDistAlignment(Alignment):
     
+    method = None
+    
     def init(self, uri1, uri2):
         #super(NameAndPropertyAlignment, self).init(uri1, uri2)
         Alignment.init(self, uri1, uri2)
         
-    def align(self):
+        
+    def _measure(self, class1, class2):
+        entity_name1 = self._get_entity_name(class1)
+        entity_name2 = self._get_entity_name(class2)
+        if entity_name1 == None or entity_name2 == None:
+            return 1.0
+        #params = (entity_name1.lower(), entity_name2.lower())
+        #invoke method
+        call = getattr(stringdistances, self.method)
+        
+        return call(entity_name1.lower(), entity_name2.lower)
+        
+    def align(self, method='equal_distance'):
+        self.method = method
         # Class matrix
         class_list1 = self._get_classes(self.onto1)
         class_dict1 = {}
@@ -264,7 +279,10 @@ class StringDistAlignment(Alignment):
         for p in prop_list2:
             prop_dict2[p] = count
             count += 1
-       
+        
+        prop_matrix = [[0 for x in xrange(len(prop_list2))] for x in xrange(len(prop_list1))]
+        
+        # Individuals maxrix
         ind_list1 = self._get_individuals(self.onto1)
         ind_dict1 = {}
         count = 0
@@ -289,4 +307,10 @@ class StringDistAlignment(Alignment):
             except:
                 pass
             
+        ind_matrix = [[0 for x in xrange(len(ind_list2))] for x in xrange(len(ind_list1))]
         
+        # Compute
+        
+        for class1 in class_list1:
+            for class2 in class_list2:
+                class_matrix[class_dict1[class1]][class_dict2[class2]] = self._measure(class1, class2)
