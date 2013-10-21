@@ -79,7 +79,7 @@ def _normalize(string):
     return string
     
 def _winkler_improvement(string1, string2, commonality):
-    n = min(len(string), len(string2))
+    n = min(len(string1), len(string2))
     for i in xrange(n):
         if string1[i] != string2[i]:
             break
@@ -109,14 +109,12 @@ def _score(string1, string2):
     
     common = 0.0
     best = 2
-    max_value = min(l1, l2)
+    #max_value = min(l1, l2)
     
     while len(s1) > 0 and len(s2) > 0 and best != 0:
         best = 0
-        
         l1 = len(s1)
         l2 = len(s2)
-        
         i = 0
         while i < l1 and l1 - i > best:
             j = 0
@@ -124,7 +122,6 @@ def _score(string1, string2):
                 k = i
                 while j < l2 and s1[k] != s2[j]:
                     j += 1
-                
                 if j != l2:
                     p = j
                     j += 1
@@ -133,18 +130,18 @@ def _score(string1, string2):
                         j += 1
                         k += 1
                     if k - i > best:
+                        best = k - i
                         start_s1 = i
                         end_s1 = k;
                         start_s2 = p;
                         end_s2 = j;
-        
+            i += 1
         new_string = ''
     
         for i in xrange(len(s1)):
             if i >= start_s1 and i < end_s1:
                 continue
             new_string += s1[i]
-            
         s1 = new_string
         new_string = ''
         
@@ -160,9 +157,9 @@ def _score(string1, string2):
         else:
             best = 0
     
-    commonality = (2 * common) / (l1 + l2)
-    
-    wi = winkler_improvement(string1, string2, commonality)
+    commonality = (2 * common) / (L1 + L2)
+
+    wi = _winkler_improvement(string1, string2, commonality)
     rest1 = L1 - common
     rest2 = L2 - common
     
@@ -187,4 +184,5 @@ def _score(string1, string2):
 def smoa_distance(string1, string2):
     if string1 == None or string2 == None:
         return 1.0
+    return 1.0 - _score(string1, string2)
     
