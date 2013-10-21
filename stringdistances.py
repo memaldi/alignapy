@@ -116,6 +116,9 @@ def _score(string1, string2):
         l1 = len(s1)
         l2 = len(s2)
         i = 0
+        
+        start_s1, start_s2, end_s1, end_s2, p = 0, 0, 0, 0, 0
+        
         while i < l1 and l1 - i > best:
             j = 0
             while l2 - j > best:
