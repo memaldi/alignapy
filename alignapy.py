@@ -391,3 +391,12 @@ class EditDistNameAlignment(StringDistAlignment):
     
     def align(self):
         StringDistAlignment.align(self,  method='levenshtein_distance')
+        
+        
+class SMOANameAlignment(StringDistAlignment):
+    
+    def init(self, uri1, uri2):
+        StringDistAlignment.init(self, uri1, uri2)
+        
+    def align(self):
+        StringDistAlignment.align(self, method='smoa_distance')
