@@ -128,6 +128,26 @@ class Alignment():
                 individuals.append(s)
         return individuals
                 
+        
+    def _populate_matrix(self, list1, list2, pia):
+        matrix = [[0 for x in xrange(len(list2))] for x in xrange(len(list1))]
+        for i, item1 in zip(xrange(len(list1)), list1):
+            entity_name1 = self._get_entity_name(item1)
+            if entity_name1 != None:
+                entity_name1 = entity_name1.lower()
+            
+            for j, item2 in zip(xrange(len(list2)), list2):
+                entity_name2 = self._get_entity_name(item2)
+                if entity_name2 != None:
+                    entity_name2 = entity_name2.lower()
+                
+                if entity_name1 != None or entity_name2 != None:                
+                    matrix[i][j] = pia * stringdistances.substring_distance(entity_name1, entity_name2)
+                else:
+                    matrix[i][j] = 1.0
+        return matrix
+        
+                
 class NameAndPropertyAlignment(Alignment):    
     
     def init(self, uri1, uri2):
@@ -145,46 +165,12 @@ class NameAndPropertyAlignment(Alignment):
             # Create property lists and matrix
             prop_list1 = self._get_properties(self.onto1)
             prop_list2 = self._get_properties(self.onto2)
-            prop_matrix = [[0 for x in xrange(len(prop_list2))] for x in xrange(len(prop_list1))]
+            prop_matrix = self._populate_matrix(prop_list1, prop_list2, pia)
              
             # Create class lists and matrix
             class_list1 = self._get_classes(self.onto1)
             class_list2 = self._get_classes(self.onto2)
-            class_matrix = [[0 for x in xrange(len(class_list2))] for x in xrange(len(class_list1))]
-
-            i = 0
-            for prop1 in prop_list1:
-                j = 0;
-                entity_name1 = self._get_entity_name(prop1)
-                if entity_name1 != None:
-                    entity_name1 = entity_name1.lower()
-                
-                for prop2 in prop_list2:
-                    entity_name2 = self._get_entity_name(prop2)
-                    if entity_name2 != None:
-                        entity_name2 = entity_name2.lower()
-                    
-                    if entity_name1 != None or entity_name2 != None:                
-                        prop_matrix[i][j] = pia * stringdistances.substring_distance(entity_name1, entity_name2)
-                    else:
-                        prop_matrix[i][j] = 1.0
-                    j += 1
-                i += 1
-                
-            i = 0            
-            for class1 in class_list1:
-                j = 0
-                entity_name1 = self._get_entity_name(class1)
-                if entity_name1 != None:
-                    entity_name1 = entity_name1.lower()
-                    
-                for class2 in class_list2:
-                    entity_name2 = self._get_entity_name(class2)
-                    if entity_name2 != None:
-                        entity_name2 = entity_name2.lower()
-                    class_matrix[i][j] = pic * stringdistances.substring_distance(entity_name1, entity_name2)
-                    j += 1
-                i += 1
+            class_matrix = self._populate_matrix(class_list1, class_list2, pic)
                 
             factor = 1.0
             while factor > epsillon:
