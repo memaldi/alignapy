@@ -165,7 +165,19 @@ class NameAndPropertyAlignment(Alignment):
                     cell = AlignmentCell(list1[i], list2[best], '=', 1.0 - max_value)
                     self.add_cell(cell)
             factor = 0.0
-    
+            
+    def _make_local_alignment(self, list1, list2, matrix):
+        for i in xrange(len(list1)):
+            properties1 = self._get_class_properties(list1[i], self.onto1)
+            nba1 = len(properties1)
+            if nba1 > 0:
+                for j in xrange(len(list2)):
+                    properties2 = self._get_class_properties(list2[j], self.onto2)
+                    moy_align_loc = self._align_local(properties1, properties2)
+                    if moy_align_loc > 0.7:
+                        matrix[i][j] = (matrix[i][j] + 2 * moy_align_loc) / 3
+        return matrix
+                        
     def init(self, uri1, uri2):
         #super(NameAndPropertyAlignment, self).init(uri1, uri2)
         Alignment.init(self, uri1, uri2)
@@ -190,18 +202,7 @@ class NameAndPropertyAlignment(Alignment):
             class_matrix = self._populate_matrix(class_list1, class_list2, pic)
                 
             self._make_alignment(prop_list1, prop_list2, prop_matrix, threshold, epsillon, factor)
-                
-            for i in xrange(len(class_list1)):
-                properties1 = self._get_class_properties(class_list1[i], self.onto1)
-                nba1 = len(properties1)
-                if nba1 > 0:
-                    for j in xrange(len(class_list2)):
-                        properties2 = self._get_class_properties(class_list2[j], self.onto2)
-                        moy_align_loc = self._align_local(properties1, properties2)
-                        if moy_align_loc > 0.7:
-                            class_matrix[i][j] = (class_matrix[i][j] + 2 * moy_align_loc) / 3
-                           
-
+            class_matrix = self._make_local_alignment(class_list1, class_list2, class_matrix)
             self._make_alignment(class_list1, class_list2, class_matrix, threshold, epsillon, factor)
                     
 class StringDistAlignment(Alignment):
