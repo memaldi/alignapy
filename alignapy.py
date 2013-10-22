@@ -150,6 +150,22 @@ class Alignment():
                 
 class NameAndPropertyAlignment(Alignment):    
     
+    def _make_alignment(self, list1, list2, matrix, threshold, epsillon, factor):
+        while factor > epsillon:
+            for i in xrange(len(list1)):
+                found = False
+                best = 0
+                max_value = threshold
+                for j in xrange(len(list2)):
+                    if matrix[i][j] < max_value:
+                        found = True
+                        best = j
+                        max_value = matrix[i][j]
+                if found and max_value < 0.5:
+                    cell = AlignmentCell(list1[i], list2[best], '=', 1.0 - max_value)
+                    self.add_cell(cell)
+            factor = 0.0
+    
     def init(self, uri1, uri2):
         #super(NameAndPropertyAlignment, self).init(uri1, uri2)
         Alignment.init(self, uri1, uri2)
@@ -160,7 +176,8 @@ class NameAndPropertyAlignment(Alignment):
         pic = 0.5 # class weigth for name
         epsillon = 0.05 # stoping condition 
         threshold = 1.0 # threshold above which distances are too high
- 
+        factor = 1.0
+        
         if self.onto1 != None and self.onto2 != None:            
             # Create property lists and matrix
             prop_list1 = self._get_properties(self.onto1)
@@ -172,21 +189,7 @@ class NameAndPropertyAlignment(Alignment):
             class_list2 = self._get_classes(self.onto2)
             class_matrix = self._populate_matrix(class_list1, class_list2, pic)
                 
-            factor = 1.0
-            while factor > epsillon:
-                for i in xrange(len(prop_list1)):
-                    found = False
-                    best = 0
-                    max_value = threshold
-                    for j in xrange(len(prop_list2)):
-                        if prop_matrix[i][j] < max_value:
-                            found = True
-                            best = j
-                            max_value = prop_matrix[i][j]
-                    if found and max_value < 0.5:
-                        cell = AlignmentCell(prop_list1[i], prop_list2[best], '=', 1.0 - max_value)
-                        self.add_cell(cell)
-                factor = 0.0
+            self._make_alignment(prop_list1, prop_list2, prop_matrix, threshold, epsillon, factor)
                 
             for i in xrange(len(class_list1)):
                 properties1 = self._get_class_properties(class_list1[i], self.onto1)
@@ -199,18 +202,7 @@ class NameAndPropertyAlignment(Alignment):
                             class_matrix[i][j] = (class_matrix[i][j] + 2 * moy_align_loc) / 3
                            
 
-            for i in xrange(len(class_list1)):
-                found = False
-                best = 0
-                max_value = threshold
-                for j in xrange(len(class_list2)):
-                    if class_matrix[i][j] < max_value:
-                        found = True
-                        best = j
-                        max_value = class_matrix[i][j]
-                if found and max_value < 0.5:
-                    cell = AlignmentCell(class_list1[i], class_list2[best], '=', 1.0 - max_value)
-                    self.add_cell(cell)
+            self._make_alignment(class_list1, class_list2, class_matrix, threshold, epsillon, factor)
                     
 class StringDistAlignment(Alignment):
     
