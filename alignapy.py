@@ -184,12 +184,12 @@ class NameAndPropertyAlignment(Alignment):
         #super(NameAndPropertyAlignment, self).init(uri1, uri2)
         Alignment.init(self, uri1, uri2)
         
-    def align(self):
+    def align(self, threshold=0.0, pia=1.0, pic=0.5, epsillon=0.05):
         #Parameters
-        pia = 1.0 # relation weight for name
-        pic = 0.5 # class weigth for name
-        epsillon = 0.05 # stoping condition 
-        threshold = 1.0 # threshold above which distances are too high
+        #pia = 1.0 # relation weight for name
+        #pic = 0.5 # class weigth for name
+        #epsillon = 0.05 # stoping condition 
+        #threshold = 1.0 # threshold above which distances are too high
         factor = 1.0
         
         if self.onto1 != None and self.onto2 != None:            
@@ -225,7 +225,7 @@ class StringDistAlignment(Alignment):
         call = getattr(stringdistances, self.method)(entity_name1.lower(), entity_name2.lower())
         return call
         
-    def align(self, method='equal_distance'):
+    def align(self, method='equal_distance', threshold=0.0):
         self.method = method
         # Class matrix
         class_list1 = self._get_classes(self.onto1)
@@ -304,7 +304,7 @@ class StringDistAlignment(Alignment):
                 prop_matrix[prop_dict1[prop1]][prop_dict2[prop2]] = self._measure(prop1, prop2)
                 
         # Extract
-        threshold = 0.0
+        #threshold = 0.0
         max_value = 0.0
         found = False
         val = 0.0
@@ -360,8 +360,8 @@ class NameEqAlignment(StringDistAlignment):
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
     
-    def align(self):
-        StringDistAlignment.align(self,  method='equal_distance')
+    def align(self, threshold=0.0):
+        StringDistAlignment.align(self,  method='equal_distance', threshold=0.0)
         
         
 class EditDistNameAlignment(StringDistAlignment):
@@ -369,8 +369,8 @@ class EditDistNameAlignment(StringDistAlignment):
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
     
-    def align(self):
-        StringDistAlignment.align(self,  method='levenshtein_distance')
+    def align(self, threshold=0.0):
+        StringDistAlignment.align(self,  method='levenshtein_distance', threshold=0.0)
         
         
 class SMOANameAlignment(StringDistAlignment):
@@ -378,8 +378,8 @@ class SMOANameAlignment(StringDistAlignment):
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
         
-    def align(self):
-        StringDistAlignment.align(self, method='smoa_distance')
+    def align(self, threshold=0.0):
+        StringDistAlignment.align(self, method='smoa_distance', threshold=0.0)
         
 
 class SubsDistNameAlignment(StringDistAlignment):
@@ -387,8 +387,8 @@ class SubsDistNameAlignment(StringDistAlignment):
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
         
-    def align(self):
-        StringDistAlignment.align(self, method='substring_distance')
+    def align(self, threshold=0.0):
+        StringDistAlignment.align(self, method='substring_distance', threshold=0.0)
 
 
 class JWNLAlignment(Alignment):
