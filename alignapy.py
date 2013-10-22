@@ -1,5 +1,7 @@
 from rdflib import Graph
 from rdflib.term import URIRef
+from nltk.corpus import wordnet as wn
+from nltk.tokenize import wordpunct_tokenize
 import stringdistances
 import operator
 
@@ -387,6 +389,85 @@ class SubsDistNameAlignment(StringDistAlignment):
         
     def align(self):
         StringDistAlignment.align(self, method='substring_distance')
+
+
+class JWNLAlignment(Alignment):
+
+    def _basic_synonym_distance(self, string1, string2):
+        string1 = string1.lower()
+        string2 = string2.lower()
+        
+        dist_subs = stringdistances.substring_distance(string1, string2)
+        synsets = wn.synsets(string1, wn.NOUN)
+        if len(synsets) == 0:
+            tokens = wordpunct_tokenize(string1)
+            for token in tokens:
+                synsets = wn.synsets(string1, wn.NOUN)
+                if len(synsets) > 0:
+                    break
+        if len(synsets) > 0:
+            for synset in synsets:
+                for lemma in synset.lemmas:
+                    dist = stringdistances.substring_distance(lemma.name, string2)
+                    if (dist < dist_subs):
+                        dist_subs = dist
+        return dist_subs
+        
+
+    def _measure(self, class1, class2):
+        entity_name1 = self._get_entity_name(class1)
+        entity_name2 = self._get_entity_name(class2)
+        
+        if entity_name1 == None or entity_name2 == None:
+            return 1
+        
+        if self.method == 'basic_syn_dist':
+            return self._basic_synonym_distance(entity_name1, entity_name2)
+        
+    def init(self, uri1, uri2):
+        Alignment.init(self, uri1, uri2)
+        
+    def align(self, method='basic_syn_dist', threshold=0.0):
+        self.method = method
+        # Create properties lists and matrix
+        prop_list1 = self._get_properties(self.onto1)
+        prop_list2 = self._get_properties(self.onto2)
+        prop_matrix = [[0 for x in xrange(len(prop_list2))] for x in xrange(len(prop_list1))]
+         
+        # Create class lists and matrix
+        class_list1 = self._get_classes(self.onto1)
+        class_list2 = self._get_classes(self.onto2)
+        class_matrix = [[0 for x in xrange(len(class_list2))] for x in xrange(len(class_list1))]
+        
+        # Create individuals lists and matrix
+        ind_list1 = self._get_individuals(self.onto1)
+        ind_list2 = self._get_individuals(self.onto2)
+        ind_matrix = [[0 for x in xrange(len(ind_list2))] for x in xrange(len(ind_list1))]
+
+        for i, class1 in zip(xrange(len(class_list1)), class_list1):
+            for j, class2 in zip(xrange(len(class_list2)), class_list2):
+                value = 1.0 - self._measure(class1, class2)
+                class_matrix[i][j] = value
+                if value > threshold:
+                    cell = AlignmentCell(class1, class2, '=', value)
+                    self.add_cell(cell)
+                
+        for i, prop1 in zip(xrange(len(prop_list1)), prop_list1):
+            for j, prop2 in zip(xrange(len(prop_list2)), prop_list2):
+                value = 1.0 - self._measure(class1, class2)
+                prop_matrix[i][j] = value
+                if value > threshold:
+                    cell = AlignmentCell(prop1, prop2, '=', value)
+                    self.add_cell(cell)
+                
+        for i, ind1 in zip(xrange(len(ind_list1)), ind_list1):
+            for j, ind2 in zip(xrange(len(ind_list2)), ind_list2):
+                value = 1.0 - self._measure(class1, class2)
+                ind_matrix[i][j] = value
+                if value > threshold:
+                    cell = AlignmentCell(ind1, ind2, '=', value)
+                    self.add_cell(cell)
+         
 
 '''class ClassStructAlignment(Alignment):
     
