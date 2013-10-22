@@ -233,8 +233,7 @@ class StringDistAlignment(Alignment):
     def init(self, uri1, uri2):
         #super(NameAndPropertyAlignment, self).init(uri1, uri2)
         Alignment.init(self, uri1, uri2)
-        
-        
+      
     def _measure(self, object1, object2):
         entity_name1 = self._get_entity_name(object1)
         entity_name2 = self._get_entity_name(object2)
@@ -400,3 +399,52 @@ class SMOANameAlignment(StringDistAlignment):
         
     def align(self):
         StringDistAlignment.align(self, method='smoa_distance')
+        
+
+class SubsDistNameAlignment(StringDistAlignment):
+
+    def init(self, uri1, uri2):
+        StringDistAlignment.init(self, uri1, uri2)
+        
+    def align(self):
+        StringDistAlignment.align(self, method='substring_distance')
+
+'''class ClassStructAlignment(Alignment):
+    
+    def init(self, uri1, uri2):
+        Alignment.init(self, uri1, uri2)
+
+    def align(self):
+        pic1 = 0.5
+        pic2 = 0.5
+        
+        # Create class lists and matrix
+        class_list1 = self._get_classes(self.onto1)
+        class_list2 = self._get_classes(self.onto2)
+        class_matrix = [[0 for x in xrange(len(class_list2))] for x in xrange(len(class_list1))]
+        
+        i = 0            
+            for class1 in class_list1:
+                j = 0
+                entity_name1 = self._get_entity_name(class1)
+                if entity_name1 != None:
+                    entity_name1 = entity_name1.lower()
+                    
+                for class2 in class_list2:
+                    entity_name2 = self._get_entity_name(class2)
+                    if entity_name2 != None:
+                        entity_name2 = entity_name2.lower()
+                    class_matrix[i][j] = pic * stringdistances.substring_distance(entity_name1, entity_name2)
+                    j += 1
+                i += 1
+        
+        for i in xrange(len(class_list1)):
+                properties1 = self._get_class_properties(class_list1[i], self.onto1)
+                nba1 = len(properties1)
+                if nba1 > 0:
+                    for j in xrange(len(class_list2)):
+                        properties2 = self._get_class_properties(class_list2[j], self.onto2)
+                        nba2 = len(properties2)
+                        attsum = 0.0
+                        for prop1 in properties1:
+'''
