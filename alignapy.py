@@ -106,6 +106,9 @@ class Alignment():
                 prop_list.append(s)
         
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a owl:DatatypeProperty}')
+        if len(prop_list) + len(sparql_result) == 0:
+            sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a rdf:Property}') 
+            print len(sparql_result)
         for s in sparql_result:
             if s not in prop_list and s[0].startswith(base):
                 prop_list.append(s)
@@ -115,6 +118,8 @@ class Alignment():
         class_list = []
         base = self._get_base_uri(ontology)
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {?s a owl:Class}')
+        if len(sparql_result) == 0:
+            sparql_result = ontology.query('SELECT DISTINCT ?s WHERE {?s a rdfs:Class}')
         for s in sparql_result:
             if s not in class_list and s[0].startswith(base):
                 class_list.append(s)
