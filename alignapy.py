@@ -7,6 +7,11 @@ import operator
 import requests
 import uuid
 
+class UriNotFound(Exception):
+    def __init__(self, uri):
+        Exception.__init__(self, 'URI <%s> not found!' % uri)
+        self.uri = uri
+
 class AlignmentCell():
         prop1 = None
         prop2 = None
@@ -25,24 +30,66 @@ class Alignment():
     cell_list = []
     
     def init(self, uri1, uri2):
-        file1 = self._get_ontology(uri1)
+        try:
+            file1 = self._get_ontology(uri1)
+        except UriNotFound as e:
+            raise e
         self.onto1 = Graph()
-        self.onto1.parse(file1, format='xml')
-        self._bind_prefixes(self.onto1)
+        done = False
+        while not done:
+            try:
+                self.onto1.parse(file1, format='xml')
+                done = True
+            except:
+                pass
+            try:
+                self.onto1.parse(file1, format='nt')
+                done = True
+            except:
+                pass
+            try:
+                self.onto1.parse(file1, format='turtle')
+                done = True
+            except:
+                pass
         
-        file2 = self._get_ontology(uri2)
+        
+        self._bind_prefixes(self.onto1)
+        try:
+            file2 = self._get_ontology(uri2)
+        except UriNotFound as e:
+            raise e
         self.onto2 = Graph()
-        self.onto2.parse(file2, format='xml')
+        done = False
+        while not done:
+            try:
+                self.onto2.parse(file2, format='xml')
+                done = True
+            except:
+                pass
+            try:
+                self.onto2.parse(file2, format='nt')
+                done = True
+            except:
+                pass
+            try:
+                self.onto2.parse(file2, format='turtle')
+                done = True
+            except:
+                pass
         self._bind_prefixes(self.onto2)
     
     def add_cell(self, cell):
         self.cell_list.append(cell)
 
     def _get_ontology(self, url):
-        r = requests.get(url)
+        headers={'Accept': 'application/rdf+xml'}
+        r = requests.get(url, headers=headers)
+        if r.status_code == 404:
+            raise UriNotFound(url)
         filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
         f = open(filename, 'w')
-        f.write(r.text)
+        f.write(r.text.encode('utf-8'))
         f.close()
         return filename
        
