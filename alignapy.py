@@ -4,6 +4,8 @@ from nltk.corpus import wordnet as wn
 from nltk.tokenize import wordpunct_tokenize
 import stringdistances
 import operator
+import requests
+import uuid
 
 class AlignmentCell():
         prop1 = None
@@ -23,16 +25,27 @@ class Alignment():
     cell_list = []
     
     def init(self, uri1, uri2):
+        file1 = self._get_ontology(uri1)
         self.onto1 = Graph()
-        self.onto1.parse(uri1, format='xml')
+        self.onto1.parse(file1, format='xml')
         self._bind_prefixes(self.onto1)
         
+        file2 = self._get_ontology(uri2)
         self.onto2 = Graph()
-        self.onto2.parse(uri2, format='xml')
+        self.onto2.parse(file2, format='xml')
         self._bind_prefixes(self.onto2)
     
     def add_cell(self, cell):
         self.cell_list.append(cell)
+
+    def _get_ontology(self, url):
+        r = requests.get(url)
+        filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
+        f = open(filename, 'w')
+        f.write(r.text)
+        f.close()
+        return filename
+       
 
     def _bind_prefixes(self, ontology):
         ontology.bind('owl', 'http://www.w3.org/2002/07/owl#')
