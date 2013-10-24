@@ -11,7 +11,17 @@ class UriNotFound(Exception):
     def __init__(self, uri):
         Exception.__init__(self, 'URI <%s> not found!' % uri)
         self.uri = uri
-
+        
+class IncorrectMimeType(Exception):
+    def __init__(self, uri):
+        Exception.__init__(self, 'Incorrect Mime Type in <%s>' % uri)
+        self.uri = uri
+        
+class UnsupportedContent(Exception):
+    def __init__(self, uri):
+        Exception.__init__(self, 'Unsupported content in <%s>' % uri)
+        self.uri = uri
+        
 class AlignmentCell():
         prop1 = None
         prop2 = None
@@ -31,52 +41,63 @@ class Alignment():
     
     def init(self, uri1, uri2):
         try:
-            file1 = self._get_ontology(uri1)
+            file1, content = self._get_ontology(uri1)
         except UriNotFound as e:
             raise e
         self.onto1 = Graph()
-        done = False
-        while not done:
+        print content
+        if 'application/rdf+xml' in content:
             try:
                 self.onto1.parse(file1, format='xml')
-                done = True
             except:
-                pass
+                raise IncorrectMimeType(uri1)
+        elif 'text/plain' in content:
             try:
                 self.onto1.parse(file1, format='nt')
-                done = True
             except:
                 pass
             try:
                 self.onto1.parse(file1, format='turtle')
-                done = True
             except:
-                pass
+                raise IncorrectMimeType(uri1)
+        elif 'text/turtle':
+            try:
+                self.onto1.parse(file1, format='turtle')
+            except:
+                raise IncorrectMimeType(uri1)
+        else:
+            raise UnsupportedContent(uri1)
         
         
         self._bind_prefixes(self.onto1)
         try:
-            file2 = self._get_ontology(uri2)
+            file2, content = self._get_ontology(uri2)
         except UriNotFound as e:
             raise e
         self.onto2 = Graph()
-        done = False
-        while not done:
+        
+        if 'application/rdf+xml' in content:
             try:
                 self.onto2.parse(file2, format='xml')
-                done = True
             except:
-                pass
+                raise IncorrectMimeType(uri2)
+        elif 'text/plain' in content:
             try:
                 self.onto2.parse(file2, format='nt')
-                done = True
             except:
                 pass
             try:
                 self.onto2.parse(file2, format='turtle')
-                done = True
             except:
-                pass
+                raise IncorrectMimeType(uri2)
+        elif 'text/turtle':
+            try:
+                self.onto2.parse(file2, format='turtle')
+            except:
+                raise IncorrectMimeType(uri2)
+        else:
+            raise UnsupportedContent(uri2)
+
         self._bind_prefixes(self.onto2)
     
     def add_cell(self, cell):
@@ -88,10 +109,13 @@ class Alignment():
         if r.status_code == 404:
             raise UriNotFound(url)
         filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
+        print filename
         f = open(filename, 'w')
         f.write(r.text.encode('utf-8'))
         f.close()
-        return filename
+        content_type = r.headers['content-type']
+        print content_type
+        return filename, content_type
        
 
     def _bind_prefixes(self, ontology):
@@ -108,7 +132,6 @@ class Alignment():
         sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a owl:DatatypeProperty}')
         if len(prop_list) + len(sparql_result) == 0:
             sparql_result = ontology.query('SELECT DISTINCT ?s WHERE { ?s a rdf:Property}') 
-            print len(sparql_result)
         for s in sparql_result:
             if s not in prop_list and s[0].startswith(base):
                 prop_list.append(s)
