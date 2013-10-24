@@ -39,13 +39,16 @@ class Alignment():
     onto2 = None
     cell_list = []
     
+    def __init__(self):
+        cell_list = []
+    
     def init(self, uri1, uri2):
         try:
             file1, content = self._get_ontology(uri1)
         except UriNotFound as e:
             raise e
         self.onto1 = Graph()
-        print content
+
         if 'application/rdf+xml' in content:
             try:
                 self.onto1.parse(file1, format='xml')
@@ -55,18 +58,23 @@ class Alignment():
             try:
                 self.onto1.parse(file1, format='nt')
             except:
-                pass
-            try:
-                self.onto1.parse(file1, format='turtle')
-            except:
-                raise IncorrectMimeType(uri1)
+                try:
+                    self.onto1.parse(file1, format='turtle')
+                except:
+                    try:
+                        self.onto1.parse(file1, format='xml')
+                    except:
+                        raise IncorrectMimeType(uri1)
         elif 'text/turtle':
             try:
                 self.onto1.parse(file1, format='turtle')
             except:
                 raise IncorrectMimeType(uri1)
         else:
-            raise UnsupportedContent(uri1)
+            try:
+                self.onto2.parse(file2, format='xml')
+            except:
+                raise UnsupportedContent(uri1)
         
         
         self._bind_prefixes(self.onto1)
@@ -85,27 +93,32 @@ class Alignment():
             try:
                 self.onto2.parse(file2, format='nt')
             except:
-                pass
-            try:
-                self.onto2.parse(file2, format='turtle')
-            except:
-                raise IncorrectMimeType(uri2)
+                try:
+                    self.onto2.parse(file2, format='turtle')
+                except:
+                    try:
+                        self.onto2.parse(file2, format='xml')
+                    except:
+                        raise IncorrectMimeType(uri2)
         elif 'text/turtle':
             try:
                 self.onto2.parse(file2, format='turtle')
             except:
                 raise IncorrectMimeType(uri2)
         else:
-            raise UnsupportedContent(uri2)
+            try:
+                self.onto2.parse(file2, format='xml')
+            except:
+                raise UnsupportedContent(uri2)
 
         self._bind_prefixes(self.onto2)
     
     def add_cell(self, cell):
         self.cell_list.append(cell)
 
-    def _get_ontology(self, url):
+    def _get_ontology(self, url, timeout=30):
         headers={'Accept': 'application/rdf+xml'}
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, timeout=timeout)
         if r.status_code == 404:
             raise UriNotFound(url)
         filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
@@ -453,6 +466,9 @@ class NameEqAlignment(StringDistAlignment):
         
         
 class EditDistNameAlignment(StringDistAlignment):
+
+    def __init__(self):
+        self.cell_list = []
 
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
