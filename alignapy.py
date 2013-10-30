@@ -2,6 +2,7 @@ from rdflib import Graph
 from rdflib.term import URIRef
 from nltk.corpus import wordnet as wn
 from nltk.tokenize import wordpunct_tokenize
+from requests.exceptions import MissingSchema
 import stringdistances
 import operator
 import requests
@@ -47,9 +48,14 @@ class Alignment():
             file1, content = self._get_ontology(uri1)
         except UriNotFound as e:
             raise e
+        except KeyError as e:
+            content = 'application/rdf+xml'
+            
         self.onto1 = Graph()
 
-        if 'application/rdf+xml' in content:
+        if 'text/html' in content:
+            raise UnsupportedContent(uri1)  
+        elif 'application/rdf+xml' in content or 'application/rdf\\+xml':
             try:
                 self.onto1.parse(file1, format='xml')
             except:
@@ -82,13 +88,20 @@ class Alignment():
             file2, content = self._get_ontology(uri2)
         except UriNotFound as e:
             raise e
+        except KeyError as e:
+            content = 'application/rdf+xml'
         self.onto2 = Graph()
         
-        if 'application/rdf+xml' in content:
+        if 'text/html' in content:
+            raise UnsupportedContent(uri2)  
+        elif 'application/rdf+xml' in content or 'application/rdf\\+xml':
             try:
                 self.onto2.parse(file2, format='xml')
             except:
-                raise IncorrectMimeType(uri2)
+                try:
+                    self.onto2.parse(file2, format='turtle')
+                except:
+                    raise IncorrectMimeType(uri2)
         elif 'text/plain' in content:
             try:
                 self.onto2.parse(file2, format='nt')
@@ -118,15 +131,22 @@ class Alignment():
 
     def _get_ontology(self, url, timeout=30):
         headers={'Accept': 'application/rdf+xml'}
-        r = requests.get(url, headers=headers, timeout=timeout)
+        try:
+            r = requests.get(url, headers=headers, timeout=timeout)
+        except MissingSchema as e:
+            raise UriNotFound(url)
+        except Exception as e:
+            raise UriNotFound(url)
         if r.status_code == 404:
             raise UriNotFound(url)
         filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
-        print filename
         f = open(filename, 'w')
         f.write(r.text.encode('utf-8'))
         f.close()
-        content_type = r.headers['content-type']
+        try:
+            content_type = r.headers['content-type']
+        except KeyError as e:
+            raise e
         print content_type
         return filename, content_type
        
@@ -214,7 +234,7 @@ class Alignment():
                 else:
                     namespace_dict[namespace] = 1
             except Exception as e:
-                print e
+                pass
                 
         #Thanks to @jonlazaro
         namespace = max(namespace_dict.iteritems(), key=operator.itemgetter(1))[0]
