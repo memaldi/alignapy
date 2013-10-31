@@ -147,7 +147,7 @@ class Alignment():
             content_type = r.headers['content-type']
         except KeyError as e:
             raise e
-        print content_type
+        #print content_type
         return filename, content_type
        
 
