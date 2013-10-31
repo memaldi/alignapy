@@ -52,14 +52,17 @@ class Alignment():
             content = 'application/rdf+xml'
             
         self.onto1 = Graph()
-
+        
         if 'text/html' in content:
             raise UnsupportedContent(uri1)  
-        elif 'application/rdf+xml' in content or 'application/rdf\\+xml':
+        elif 'application/rdf+xml' in content or 'application/rdf\\+xml' in content:
             try:
                 self.onto1.parse(file1, format='xml')
             except:
-                raise IncorrectMimeType(uri1)
+                try:
+                    self.onto2.parse(file2, format='turtle')
+                except:
+                    raise IncorrectMimeType(uri2)
         elif 'text/plain' in content:
             try:
                 self.onto1.parse(file1, format='nt')
@@ -94,7 +97,7 @@ class Alignment():
         
         if 'text/html' in content:
             raise UnsupportedContent(uri2)  
-        elif 'application/rdf+xml' in content or 'application/rdf\\+xml':
+        elif 'application/rdf+xml' in content or 'application/rdf\\+xml' in content:
             try:
                 self.onto2.parse(file2, format='xml')
             except:
