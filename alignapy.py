@@ -55,7 +55,7 @@ class Alignment():
         
         if 'text/html' in content:
             raise UnsupportedContent(uri1)  
-        elif 'application/rdf+xml' in content or 'application/rdf\\+xml' in content:
+        elif 'application/rdf+xml' in content or 'application/rdf\\+xml' in content or 'application/owl+xml' in content:
             try:
                 self.onto1.parse(file1, format='xml')
             except:
@@ -97,7 +97,7 @@ class Alignment():
         
         if 'text/html' in content:
             raise UnsupportedContent(uri2)  
-        elif 'application/rdf+xml' in content or 'application/rdf\\+xml' in content:
+        elif 'application/rdf+xml' in content or 'application/rdf\\+xml' in content or 'application/owl+xml' in content:
             try:
                 self.onto2.parse(file2, format='xml')
             except:
@@ -276,6 +276,9 @@ class Alignment():
                 
 class NameAndPropertyAlignment(Alignment):    
     
+    def __init__(self):
+        self.cell_list = []
+    
     def _make_alignment(self, list1, list2, matrix, threshold, epsillon, factor):
         while factor > epsillon:
             for i in xrange(len(list1)):
@@ -332,6 +335,9 @@ class NameAndPropertyAlignment(Alignment):
             self._make_alignment(class_list1, class_list2, class_matrix, threshold, epsillon, factor)
                     
 class StringDistAlignment(Alignment):
+    
+    def __init__(self):
+        self.cell_list = []
     
     method = None
     
@@ -481,6 +487,9 @@ class StringDistAlignment(Alignment):
                 
 class NameEqAlignment(StringDistAlignment):
 
+    def __init__(self):
+        self.cell_list = []
+
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
     
@@ -502,6 +511,9 @@ class EditDistNameAlignment(StringDistAlignment):
         
 class SMOANameAlignment(StringDistAlignment):
     
+    def __init__(self):
+        self.cell_list = []
+    
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
         
@@ -511,6 +523,9 @@ class SMOANameAlignment(StringDistAlignment):
 
 class SubsDistNameAlignment(StringDistAlignment):
 
+    def __init__(self):
+        self.cell_list = []
+
     def init(self, uri1, uri2):
         StringDistAlignment.init(self, uri1, uri2)
         
@@ -519,6 +534,9 @@ class SubsDistNameAlignment(StringDistAlignment):
 
 
 class JWNLAlignment(Alignment):
+
+    def __init__(self):
+        self.cell_list = []
 
     def _basic_synonym_distance(self, string1, string2):
         string1 = string1.lower()
