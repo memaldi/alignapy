@@ -286,7 +286,7 @@ class NameAndPropertyAlignment(Alignment):
                 best = 0
                 max_value = threshold
                 for j in xrange(len(list2)):
-                    if matrix[i][j] < max_value:
+                    if matrix[i][j] < max_value:                 
                         found = True
                         best = j
                         max_value = matrix[i][j]
@@ -311,7 +311,7 @@ class NameAndPropertyAlignment(Alignment):
         #super(NameAndPropertyAlignment, self).init(uri1, uri2)
         Alignment.init(self, uri1, uri2)
         
-    def align(self, threshold=0.0, pia=1.0, pic=0.5, epsillon=0.05):
+    def align(self, threshold=1.0, pia=1.0, pic=0.5, epsillon=0.05):
         #Parameters
         #pia = 1.0 # relation weight for name
         #pic = 0.5 # class weigth for name
