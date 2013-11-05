@@ -599,7 +599,7 @@ class JWNLAlignment(Alignment):
                 
         for i, prop1 in zip(xrange(len(prop_list1)), prop_list1):
             for j, prop2 in zip(xrange(len(prop_list2)), prop_list2):
-                value = 1.0 - self._measure(class1, class2)
+                value = 1.0 - self._measure(prop1, prop2)
                 prop_matrix[i][j] = value
                 if value > threshold:
                     cell = AlignmentCell(prop1, prop2, '=', value)
@@ -607,7 +607,7 @@ class JWNLAlignment(Alignment):
                 
         for i, ind1 in zip(xrange(len(ind_list1)), ind_list1):
             for j, ind2 in zip(xrange(len(ind_list2)), ind_list2):
-                value = 1.0 - self._measure(class1, class2)
+                value = 1.0 - self._measure(ind1, ind2)
                 ind_matrix[i][j] = value
                 if value > threshold:
                     cell = AlignmentCell(ind1, ind2, '=', value)
