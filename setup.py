@@ -4,6 +4,7 @@ setup(
     version = "0.1",
     packages = find_packages(),
     namespace_packages=['alignapy'],
+    include_package_data=True,
     install_requires=[
                 'rdflib>=4.0.1',
                 'nltk>=2.0',
