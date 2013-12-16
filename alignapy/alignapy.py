@@ -7,6 +7,7 @@ import stringdistances
 import operator
 import requests
 import uuid
+from tempfile import NamedTemporaryFile
 
 class UriNotFound(Exception):
     def __init__(self, uri):
@@ -45,7 +46,8 @@ class Alignment():
     
     def init(self, uri1, uri2):
         try:
-            file1, content = self._get_ontology(uri1)
+            f1, content = self._get_ontology(uri1)
+            file1 = f1.name
         except UriNotFound as e:
             raise e
         except KeyError as e:
@@ -88,7 +90,8 @@ class Alignment():
         
         self._bind_prefixes(self.onto1)
         try:
-            file2, content = self._get_ontology(uri2)
+            f2, content = self._get_ontology(uri2)
+            file2 = f2.name
         except UriNotFound as e:
             raise e
         except KeyError as e:
@@ -128,6 +131,8 @@ class Alignment():
                 raise UnsupportedContent(uri2)
 
         self._bind_prefixes(self.onto2)
+        f1.close()
+        f2.close()
     
     def add_cell(self, cell):
         self.cell_list.append(cell)
@@ -142,16 +147,21 @@ class Alignment():
             raise UriNotFound(url)
         if r.status_code == 404:
             raise UriNotFound(url)
-        filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
+            
+        f = NamedTemporaryFile()
+        f.write(r.text.encode('utf-8'))
+        f.flush()
+        
+        '''filename = '/tmp/' + str(uuid.uuid4()) + '.owl'
         f = open(filename, 'w')
         f.write(r.text.encode('utf-8'))
-        f.close()
+        f.close()'''
         try:
             content_type = r.headers['content-type']
         except KeyError as e:
             raise e
         #print content_type
-        return filename, content_type
+        return f, content_type
        
 
     def _bind_prefixes(self, ontology):
